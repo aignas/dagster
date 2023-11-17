@@ -1419,12 +1419,7 @@ class AssetExecutionContext(OpExecutionContext):
             op_execution_context, "op_execution_context", OpExecutionContext
         )
 
-        self._run_props = RunProperties(
-            run_id=self._op_execution_context.run_id,
-            run_config=self._op_execution_context.run_config,
-            dagster_run=self._op_execution_context.run,
-            retry_number=self._op_execution_context.retry_number,
-        )
+        self._run_props = None
 
     @staticmethod
     def get() -> "AssetExecutionContext":
@@ -1441,6 +1436,13 @@ class AssetExecutionContext(OpExecutionContext):
 
     @property
     def run_properties(self) -> RunProperties:
+        if self._run_props is None:
+            self._run_props = RunProperties(
+                run_id=self._op_execution_context.run_id,
+                run_config=self._op_execution_context.run_config,
+                dagster_run=self._op_execution_context.run,
+                retry_number=self._op_execution_context.retry_number,
+            )
         return self._run_props
 
     ######## Deprecated methods
