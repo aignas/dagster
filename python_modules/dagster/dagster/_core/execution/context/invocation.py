@@ -773,7 +773,7 @@ class RunlessAssetExecutionContext(AssetExecutionContext, BaseRunlessContext):
         return self
 
     def unbind(self):
-        self._op_execution_context = self._op_execution_context.unbind()
+        self._op_execution_context.unbind()
 
     @property
     def bound_properties(self) -> BoundProperties:
