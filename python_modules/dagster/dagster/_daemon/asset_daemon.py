@@ -115,7 +115,7 @@ def get_current_evaluation_id(
             else None
         )
 
-    return AssetDaemonCursor.get_evaluation_id_from_serialized(raw_cursor) if raw_cursor else None
+    return AssetDaemonCursor.from_serialized(raw_cursor, None).evaluation_id if raw_cursor else None
 
 
 class AutoMaterializeLaunchContext:

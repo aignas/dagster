@@ -188,7 +188,7 @@ class AssetDaemonScenarioState(NamedTuple):
     asset_specs: Sequence[Union[AssetSpec, AssetSpecWithPartitionsDef]]
     current_time: datetime.datetime = pendulum.now()
     run_requests: Sequence[RunRequest] = []
-    serialized_cursor: str = AssetDaemonCursor.empty().serialize()
+    serialized_cursor: str = AssetDaemonCursor.empty(0).serialize()
     evaluations: Sequence[AssetConditionEvaluation] = []
     logger: logging.Logger = logging.getLogger("dagster.amp")
     tick_index: int = 1
@@ -254,6 +254,9 @@ class AssetDaemonScenarioState(NamedTuple):
             else:
                 new_asset_specs.append(spec)
         return self._replace(asset_specs=new_asset_specs)
+
+    def with_serialized_cursor(self, serialized_cursor: str) -> "AssetDaemonScenarioState":
+        return self._replace(serialized_cursor=serialized_cursor)
 
     def with_all_eager(
         self, max_materializations_per_minute: int = 1
@@ -406,9 +409,9 @@ class AssetDaemonScenarioState(NamedTuple):
             ]
         return new_run_requests, new_cursor, new_evaluations
 
-    def evaluate_tick(self) -> "AssetDaemonScenarioState":
+    def evaluate_tick(self, label: Optional[str] = None) -> "AssetDaemonScenarioState":
         self.logger.critical("********************************")
-        self.logger.critical(f"EVALUATING TICK {self.tick_index}")
+        self.logger.critical(f"EVALUATING TICK {label or self.tick_index}")
         self.logger.critical("********************************")
         with pendulum.test(self.current_time):
             if self.is_daemon:
@@ -569,10 +572,16 @@ class AssetDaemonScenarioState(NamedTuple):
 
         try:
             for actual_sm, expected_sm in zip(
-                sorted(actual_subsets_with_metadata, key=lambda x: str(x)),
-                sorted(expected_subsets_with_metadata, key=lambda x: str(x)),
+                sorted(
+                    actual_subsets_with_metadata,
+                    key=lambda x: (frozenset(x.subset.asset_partitions), str(x.metadata)),
+                ),
+                sorted(
+                    expected_subsets_with_metadata,
+                    key=lambda x: (frozenset(x.subset.asset_partitions), str(x.metadata)),
+                ),
             ):
-                assert actual_sm.subset == expected_sm.subset
+                assert actual_sm.subset.asset_partitions == expected_sm.subset.asset_partitions
                 # only check evaluation data if it was set on the expected evaluation spec
                 if expected_sm.metadata:
                     assert actual_sm.metadata == expected_sm.metadata
