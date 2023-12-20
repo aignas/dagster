@@ -402,7 +402,9 @@ class AssetDaemonScenarioState(NamedTuple):
                 )
             ]
             new_evaluations = [
-                e.evaluation
+                e.get_evaluation_with_run_ids(
+                    self.asset_graph.get_partitions_def(e.asset_key)
+                ).evaluation
                 for e in check.not_none(
                     self.instance.schedule_storage
                 ).get_auto_materialize_evaluations_for_evaluation_id(new_cursor.evaluation_id)
@@ -503,7 +505,7 @@ class AssetDaemonScenarioState(NamedTuple):
             )
             if key in (run.asset_selection or set())
         }
-        evaluation_with_run_ids = next(
+        evaluation_record = next(
             iter(
                 [
                     e
@@ -514,7 +516,12 @@ class AssetDaemonScenarioState(NamedTuple):
                 ]
             )
         )
-        assert new_run_ids_for_asset == evaluation_with_run_ids.run_ids
+        assert (
+            new_run_ids_for_asset
+            == evaluation_record.get_evaluation_with_run_ids(
+                self.asset_graph.get_partitions_def(key)
+            ).run_ids
+        )
 
     def assert_evaluation(
         self,
