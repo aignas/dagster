@@ -40,7 +40,7 @@ from dagster import (
     materialize,
 )
 from dagster._core.definitions.asset_condition import (
-    AssetConditionEvaluation,
+    AssetConditionEvaluationResult,
     AssetSubsetWithMetadata,
 )
 from dagster._core.definitions.asset_daemon_context import (
@@ -221,7 +221,7 @@ class AssetDaemonScenarioState(NamedTuple):
     current_time: datetime.datetime = pendulum.now("UTC")
     run_requests: Sequence[RunRequest] = []
     serialized_cursor: str = serialize_value(AssetDaemonCursor.empty(0))
-    evaluations: Sequence[AssetConditionEvaluation] = []
+    evaluations: Sequence[AssetConditionEvaluationResult] = []
     logger: logging.Logger = logging.getLogger("dagster.amp")
     tick_index: int = 1
     # this is set by the scenario runner
@@ -388,7 +388,7 @@ class AssetDaemonScenarioState(NamedTuple):
 
     def _evaluate_tick_fast(
         self,
-    ) -> Tuple[Sequence[RunRequest], AssetDaemonCursor, Sequence[AssetConditionEvaluation]]:
+    ) -> Tuple[Sequence[RunRequest], AssetDaemonCursor, Sequence[AssetConditionEvaluationResult]]:
         cursor = asset_daemon_cursor_from_pre_sensor_auto_materialize_serialized_cursor(
             self.serialized_cursor, self.asset_graph
         )
@@ -458,7 +458,7 @@ class AssetDaemonScenarioState(NamedTuple):
     ) -> Tuple[
         Sequence[RunRequest],
         AssetDaemonCursor,
-        Sequence[AssetConditionEvaluation],
+        Sequence[AssetConditionEvaluationResult],
     ]:
         with self._create_workspace_context() as workspace_context:
             workspace = workspace_context.create_request_context()
@@ -632,7 +632,7 @@ class AssetDaemonScenarioState(NamedTuple):
         return self
 
     def _assert_evaluation_daemon(
-        self, key: AssetKey, actual_evaluation: AssetConditionEvaluation
+        self, key: AssetKey, actual_evaluation: AssetConditionEvaluationResult
     ) -> None:
         """Additional assertions for daemon mode. Checks that the evaluation for the given asset
         contains the expected run ids.
@@ -694,7 +694,9 @@ class AssetDaemonScenarioState(NamedTuple):
         if num_requested is not None:
             assert actual_evaluation.true_subset.size == num_requested
 
-        def get_leaf_evaluations(e: AssetConditionEvaluation) -> Sequence[AssetConditionEvaluation]:
+        def get_leaf_evaluations(
+            e: AssetConditionEvaluationResult,
+        ) -> Sequence[AssetConditionEvaluationResult]:
             if len(e.child_evaluations) == 0:
                 return [e]
             leaf_evals = []

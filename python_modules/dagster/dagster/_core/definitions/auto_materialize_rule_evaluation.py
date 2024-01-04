@@ -38,7 +38,7 @@ if TYPE_CHECKING:
     from dagster._core.definitions.asset_condition import AssetSubsetWithMetadata
 
     from .asset_condition import (
-        AssetConditionEvaluation,
+        AssetConditionEvaluationResult,
         AssetConditionEvaluationWithRunIds,
         AssetConditionSnapshot,
     )
@@ -243,9 +243,9 @@ class BackcompatAutoMaterializeAssetEvaluationSerializer(NamedTupleSerializer):
         ],
         is_partitioned: bool,
         rule_snapshot: AutoMaterializeRuleSnapshot,
-    ) -> "AssetConditionEvaluation":
+    ) -> "AssetConditionEvaluationResult":
         from .asset_condition import (
-            AssetConditionEvaluation,
+            AssetConditionEvaluationResult,
             AssetSubsetWithMetadata,
             HistoricalAllPartitionsSubset,
         )
@@ -269,7 +269,7 @@ class BackcompatAutoMaterializeAssetEvaluationSerializer(NamedTupleSerializer):
                 asset_key, is_partitioned, serialized
             )
 
-        return AssetConditionEvaluation(
+        return AssetConditionEvaluationResult(
             condition_snapshot=condition_snapshot,
             true_subset=true_subset,
             candidate_subset=HistoricalAllPartitionsSubset()
@@ -289,9 +289,9 @@ class BackcompatAutoMaterializeAssetEvaluationSerializer(NamedTupleSerializer):
         rule_snapshots: Sequence[AutoMaterializeRuleSnapshot],
         is_partitioned: bool,
         decision_type: AutoMaterializeDecisionType,
-    ) -> Optional["AssetConditionEvaluation"]:
+    ) -> Optional["AssetConditionEvaluationResult"]:
         from .asset_condition import (
-            AssetConditionEvaluation,
+            AssetConditionEvaluationResult,
             AssetConditionSnapshot,
             HistoricalAllPartitionsSubset,
             NotAssetCondition,
@@ -332,7 +332,7 @@ class BackcompatAutoMaterializeAssetEvaluationSerializer(NamedTupleSerializer):
                 if is_partitioned
                 else AssetSubset.empty(asset_key, None)
             )
-            evaluation = AssetConditionEvaluation(
+            evaluation = AssetConditionEvaluationResult(
                 condition_snapshot=decision_type_snapshot,
                 true_subset=reduce(
                     operator.or_, (e.true_subset for e in child_evaluations), initial
@@ -355,7 +355,7 @@ class BackcompatAutoMaterializeAssetEvaluationSerializer(NamedTupleSerializer):
             evaluation.condition_snapshot.unique_id,
         ]
         unique_id = hashlib.md5("".join(unique_id_parts).encode()).hexdigest()
-        return AssetConditionEvaluation(
+        return AssetConditionEvaluationResult(
             condition_snapshot=AssetConditionSnapshot(
                 class_name=NotAssetCondition.__name__, description="Not", unique_id=unique_id
             ),
@@ -381,7 +381,7 @@ class BackcompatAutoMaterializeAssetEvaluationSerializer(NamedTupleSerializer):
     ) -> "AssetConditionEvaluationWithRunIds":
         from .asset_condition import (
             AndAssetCondition,
-            AssetConditionEvaluation,
+            AssetConditionEvaluationResult,
             AssetConditionSnapshot,
             HistoricalAllPartitionsSubset,
         )
@@ -435,7 +435,7 @@ class BackcompatAutoMaterializeAssetEvaluationSerializer(NamedTupleSerializer):
             class_name=AndAssetCondition.__name__, description="All of", unique_id=unique_id
         )
 
-        return AssetConditionEvaluation(
+        return AssetConditionEvaluationResult(
             condition_snapshot=condition_snapshot,
             true_subset=reduce(operator.and_, (e.true_subset for e in child_evaluations)),
             candidate_subset=HistoricalAllPartitionsSubset()

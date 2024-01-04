@@ -6,7 +6,7 @@ import pytest
 
 from dagster import StaticPartitionsDefinition
 from dagster._core.definitions.asset_condition import (
-    AssetConditionEvaluation,
+    AssetConditionEvaluationResult,
     AssetConditionSnapshot,
     AssetSubsetWithMetadata,
 )
@@ -715,14 +715,14 @@ class TestScheduleStorage:
             storage.add_auto_materialize_asset_evaluations(
                 evaluation_id=10,
                 asset_evaluations=[
-                    AssetConditionEvaluation(
+                    AssetConditionEvaluationResult(
                         condition_snapshot=condition_snapshot,
                         true_subset=AssetSubset(asset_key=AssetKey("asset_one"), value=False),
                         candidate_subset=AssetSubset(asset_key=AssetKey("asset_one"), value=False),
                         start_timestamp=0,
                         end_timestamp=1,
                     ).with_run_ids(set()),
-                    AssetConditionEvaluation(
+                    AssetConditionEvaluationResult(
                         condition_snapshot=condition_snapshot,
                         true_subset=AssetSubset(asset_key=AssetKey("asset_two"), value=True),
                         candidate_subset=AssetSubset(asset_key=AssetKey("asset_two"), value=True),
@@ -776,7 +776,7 @@ class TestScheduleStorage:
         storage.add_auto_materialize_asset_evaluations(
             evaluation_id=11,
             asset_evaluations=[
-                AssetConditionEvaluation(
+                AssetConditionEvaluationResult(
                     condition_snapshot=condition_snapshot,
                     start_timestamp=0,
                     end_timestamp=1,
@@ -807,7 +807,7 @@ class TestScheduleStorage:
 
         # add a mix of keys - one that already is using the unique index and one that is not
 
-        eval_one = AssetConditionEvaluation(
+        eval_one = AssetConditionEvaluationResult(
             condition_snapshot=AssetConditionSnapshot("foo", "bar", ""),
             start_timestamp=0,
             end_timestamp=1,
@@ -815,7 +815,7 @@ class TestScheduleStorage:
             candidate_subset=AssetSubset(asset_key=AssetKey("asset_one"), value=True),
         ).with_run_ids(set())
 
-        eval_asset_three = AssetConditionEvaluation(
+        eval_asset_three = AssetConditionEvaluationResult(
             condition_snapshot=AssetConditionSnapshot("foo", "bar", ""),
             start_timestamp=0,
             end_timestamp=1,
@@ -861,7 +861,7 @@ class TestScheduleStorage:
         storage.add_auto_materialize_asset_evaluations(
             evaluation_id=10,
             asset_evaluations=[
-                AssetConditionEvaluation(
+                AssetConditionEvaluationResult(
                     condition_snapshot=AssetConditionSnapshot("foo", "bar", ""),
                     start_timestamp=0,
                     end_timestamp=1,
@@ -894,7 +894,7 @@ class TestScheduleStorage:
         storage.add_auto_materialize_asset_evaluations(
             evaluation_id=11,
             asset_evaluations=[
-                AssetConditionEvaluation(
+                AssetConditionEvaluationResult(
                     condition_snapshot=AssetConditionSnapshot("foo", "bar", ""),
                     start_timestamp=0,
                     end_timestamp=1,
