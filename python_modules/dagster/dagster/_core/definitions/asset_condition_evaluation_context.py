@@ -202,9 +202,7 @@ class AssetConditionEvaluationContext:
         ):
             return self.empty_subset()
 
-        return self.previous_evaluation_info.evaluation_result.get_requested_or_discarded_subset(
-            self.condition
-        )
+        return self.previous_evaluation_info.evaluation_result.get_requested_or_discarded_subset()
 
     @property
     def materialized_requested_or_discarded_since_previous_tick_subset(self) -> AssetSubset:
