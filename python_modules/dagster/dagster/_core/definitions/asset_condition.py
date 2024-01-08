@@ -192,6 +192,21 @@ class AssetConditionEvaluation(NamedTuple):
     def with_run_ids(self, run_ids: AbstractSet[str]) -> "AssetConditionEvaluationWithRunIds":
         return AssetConditionEvaluationWithRunIds(evaluation=self, run_ids=frozenset(run_ids))
 
+    def legacy_num_skipped(self, condition: "AssetCondition") -> int:
+        not_skip_condition = condition.not_skip_condition
+        if not not_skip_condition:
+            return 0
+
+        not_skip_evaluation = self.child_evaluations[1]
+        skip_evaluation = not_skip_evaluation.child_evaluations[0]
+        return skip_evaluation.true_subset.size - self.legacy_num_discarded(condition)
+
+    def legacy_num_discarded(self, condition: "AssetCondition") -> int:
+        discarded_subset = self.discarded_subset(condition)
+        if discarded_subset is None:
+            return 0
+        return discarded_subset.size
+
 
 class AssetConditionEvaluationResult(NamedTuple):
     """Return value for the evaluate method of an AssetCondition."""
@@ -327,6 +342,12 @@ class AssetCondition(ABC):
     @property
     def children(self) -> Sequence["AssetCondition"]:
         return []
+
+    @property
+    def not_skip_condition(self) -> Optional["AssetCondition"]:
+        if not self.is_legacy:
+            return None
+        return self.children[1]
 
     @property
     def not_discard_condition(self) -> Optional["AssetCondition"]:

@@ -40,6 +40,7 @@ def _get_graphene_records_from_evaluations(
     asset_keys = {record.asset_key for record in evaluation_records}
 
     partitions_defs = {}
+    asset_conditions = {}
 
     nodes = get_asset_nodes_by_asset_key(graphene_info)
     for asset_key in asset_keys:
@@ -49,11 +50,18 @@ def _get_graphene_records_from_evaluations(
             if asset_node and asset_node.external_asset_node.partitions_def_data
             else None
         )
+        asset_conditions[asset_key] = (
+            asset_node.external_asset_node.auto_materialize_policy.to_asset_condition()
+            if asset_node and asset_node.external_asset_node.auto_materialize_policy
+            else None
+        )
 
     return GrapheneAutoMaterializeAssetEvaluationRecords(
         records=[
             GrapheneAutoMaterializeAssetEvaluationRecord(
-                evaluation, partitions_defs[evaluation.asset_key]
+                evaluation,
+                partitions_defs[evaluation.asset_key],
+                asset_conditions[evaluation.asset_key],
             )
             for evaluation in evaluation_records
         ]
