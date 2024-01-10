@@ -11,6 +11,7 @@ from dagster._core.definitions.time_window_partitions import BaseTimeWindowParti
 from dagster._core.instance import DynamicPartitionsStore
 from dagster._core.scheduler.instigation import AutoMaterializeAssetEvaluationRecord
 
+from dagster_graphql.implementation.events import iterate_metadata_entries
 from dagster_graphql.schema.auto_materialize_asset_evaluations import (
     GrapheneAutoMaterializeAssetEvaluationNeedsMigrationError,
 )
@@ -93,6 +94,7 @@ class GrapheneUnpartitionedAssetConditionEvaluationNode(graphene.ObjectType):
         name = "UnpartitionedAssetConditionEvaluationNode"
 
     def __init__(self, evaluation: AssetConditionEvaluation):
+        self._evaluation = evaluation
         if evaluation.true_subset.bool_value:
             status = AssetConditionEvaluationStatus.TRUE
         elif (
@@ -121,7 +123,7 @@ class GrapheneUnpartitionedAssetConditionEvaluationNode(graphene.ObjectType):
             (subset.metadata for subset in self._evaluation.subsets_with_metadata),
             {},
         )
-        return [GrapheneMetadataEntry(key=key, value=value) for key, value in metadata.items()]
+        return list(iterate_metadata_entries(metadata))
 
 
 class GraphenePartitionedAssetConditionEvaluationNode(graphene.ObjectType):
@@ -236,7 +238,7 @@ class GrapheneSpecificPartitionAssetConditionEvaluationNode(graphene.ObjectType)
             ),
             {},
         )
-        return [GrapheneMetadataEntry(key=key, value=value) for key, value in metadata.items()]
+        return list(iterate_metadata_entries(metadata))
 
 
 class GrapheneAssetConditionEvaluationNode(graphene.Union):
