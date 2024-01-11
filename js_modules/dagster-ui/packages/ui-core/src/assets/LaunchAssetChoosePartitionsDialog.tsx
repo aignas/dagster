@@ -170,6 +170,7 @@ const LaunchAssetChoosePartitionsDialogBody = ({
   const assetHealthLoading = assetHealth.length === 0;
 
   const displayedHealth = React.useMemo(() => {
+    console.log(JSON.stringify({assetHealth}, null, 2));
     if (target.type === 'pureAll') {
       return mergedAssetHealth([]);
     }
@@ -428,7 +429,7 @@ const LaunchAssetChoosePartitionsDialogBody = ({
     if (target.type === 'pureWithAnchorAsset') {
       notices.push(
         `Dagster will materialize all partitions downstream of the ` +
-          `selected partitions for the selected assets, using separate runs 
+          `selected partitions for the selected assets, using separate runs
                 ${backfillPolicyVaries ? `and obeying backfill policies.` : `as needed.`}`,
       );
     } else if (backfillPolicyVaries) {
