@@ -383,7 +383,7 @@ const AssetGraphExplorerWithData = ({
     selectNodeById(e, nextId);
   };
 
-  const selectAllGroupNodesById = React.useCallback(
+  const toggleSelectAllGroupNodesById = React.useCallback(
     (e: React.MouseEvent<any> | React.KeyboardEvent<any>, groupId: string) => {
       const assets = groupedAssets[groupId] || [];
       const childNodeTokens = assets.map((n) => tokenForAssetKey(n.assetKey));
@@ -415,7 +415,7 @@ const AssetGraphExplorerWithData = ({
         zoomToGroup(modifiedNodeId);
 
         if (e.metaKey) {
-          selectAllGroupNodesById(e, modifiedNodeId);
+          toggleSelectAllGroupNodesById(e, modifiedNodeId);
         }
 
         return;
@@ -439,7 +439,7 @@ const AssetGraphExplorerWithData = ({
       onSelectNode,
       layout,
       zoomToGroup,
-      selectAllGroupNodesById,
+      toggleSelectAllGroupNodesById,
       setExpandedGroups,
       expandedGroups,
     ],
@@ -529,13 +529,12 @@ const AssetGraphExplorerWithData = ({
                     assets: groupedAssets[group.id] || [],
                   }}
                   minimal={scale < MINIMAL_SCALE}
-                  onCollapse={(e) => {
-                    if (e.metaKey) {
-                      selectAllGroupNodesById(e, group.id);
-                    } else {
-                      focusGroupIdAfterLayoutRef.current = group.id;
-                      setExpandedGroups(expandedGroups.filter((g) => g !== group.id));
-                    }
+                  onCollapse={() => {
+                    focusGroupIdAfterLayoutRef.current = group.id;
+                    setExpandedGroups(expandedGroups.filter((g) => g !== group.id));
+                  }}
+                  toggleSelectAllNodes={(e: React.MouseEvent) => {
+                    toggleSelectAllGroupNodesById(e, group.id);
                   }}
                 />
               </foreignObject>
@@ -581,13 +580,12 @@ const AssetGraphExplorerWithData = ({
                     assetCount: allGroupCounts[group.id] || 0,
                     assets: groupedAssets[group.id] || [],
                   }}
-                  onExpand={(e) => {
-                    if (e.metaKey) {
-                      selectAllGroupNodesById(e, group.id);
-                    } else {
-                      focusGroupIdAfterLayoutRef.current = group.id;
-                      setExpandedGroups([...expandedGroups, group.id]);
-                    }
+                  onExpand={() => {
+                    focusGroupIdAfterLayoutRef.current = group.id;
+                    setExpandedGroups([...expandedGroups, group.id]);
+                  }}
+                  toggleSelectAllNodes={(e: React.MouseEvent) => {
+                    toggleSelectAllGroupNodesById(e, group.id);
                   }}
                 />
               </foreignObject>
