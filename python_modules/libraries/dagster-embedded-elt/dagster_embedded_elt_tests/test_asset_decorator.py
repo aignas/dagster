@@ -1,73 +1,52 @@
 import os
-import sqlite3
-import tempfile
+from pathlib import Path
 
 import pytest
-from dagster import AssetExecutionContext, AssetOut, file_relative_path
-from dagster._core.definitions import build_assets_job
-from dagster_embedded_elt.sling.asset_decorator import sling_asset
-from dagster_embedded_elt.sling.resources import (
-    SlingMode,
-    SlingResource,
-    SlingSourceConnection,
-    SlingTargetConnection,
+import yaml
+from dagster import AssetKey
+from dagster_embedded_elt.sling.asset_decorator import sling_assets
+from dagster_embedded_elt.sling.sling_replication import SlingReplicationParam
+
+"""@pytest.mark.parametrize("manifest", [manifest, manifest_path, os.fspath(manifest_path)])
+def test_manifest_argument(manifest: DbtManifestParam):
+    @dbt_assets(manifest=manifest)
+    def my_dbt_assets():
+        ...
+
+    assert my_dbt_assets.keys == {
+        AssetKey.from_user_string(key)
+        for key in [
+            "sort_by_calories",
+            "cold_schema/sort_cold_cereals_by_calories",
+            "subdir_schema/least_caloric",
+            "sort_hot_cereals_by_calories",
+            "orders_snapshot",
+            "cereals",
+        ]
+    }
+"""
+
+
+replication_path = Path(__file__).joinpath("..", "sling_replication.yaml").resolve()
+with replication_path.open("r") as f:
+    replication = yaml.safe_load(f)
+
+
+@pytest.mark.parametrize(
+    "replication", [replication, replication_path, os.fspath(replication_path)]
 )
+def test_replication_argument(replication: SlingReplicationParam):
+    @sling_assets(replication=replication)
+    def my_sling_assets():
+        ...
 
-
-@pytest.fixture
-def temp_db():
-    with tempfile.TemporaryDirectory() as tmpdir_path:
-        dbpath = os.path.join(tmpdir_path, "sqlite.db")
-        yield dbpath
-
-
-@pytest.fixture
-def sling_sqlite_resource(temp_db):
-    return SlingResource(
-        source_connection=SlingSourceConnection(type="file"),
-        target_connection=SlingTargetConnection(
-            type="sqlite", connection_string=f"sqlite://{temp_db}"
-        ),
-    )
-
-
-@pytest.fixture
-def sqlite_connection(temp_db):
-    yield sqlite3.connect(temp_db)
-
-
-@pytest.fixture
-def test_csv():
-    return os.path.abspath(file_relative_path(__file__, "test.csv"))
-
-
-def test_build_sling_asset_decorator(
-    test_csv: str, sling_sqlite_resource: SlingResource, sqlite_connection: sqlite3.Connection
-):
-    @sling_asset(outs={"main_tbl": AssetOut()})
-    def main_tbl(context: AssetExecutionContext, sling: SlingResource):
-        source_stream = f"file://{test_csv}"
-        target_object = "main.tbl"
-        mode = SlingMode.INCREMENTAL
-        primary_key = "SPECIES_CODE"
-
-        yield from sling.stream(
-            source_stream=source_stream,
-            target_object=target_object,
-            mode=mode,
-            primary_key=[primary_key],
-        )
-
-    sling_job = build_assets_job(
-        "sling_job",
-        [main_tbl],
-        resource_defs={"sling": sling_sqlite_resource},
-    )
-    runs = 1
-    expected = 3
-    counts = None
-    for _ in range(runs):
-        res = sling_job.execute_in_process()
-        assert res.success
-        counts = sqlite_connection.execute("SELECT count(1) FROM main.tbl").fetchone()[0]
-    assert counts == expected
+    assert my_sling_assets.keys == {
+        AssetKey.from_user_string(key)
+        for key in [
+            "public/accounts",
+            "public/foo_users",
+            "public/Transactions",
+            "public/all_users",
+            "public/finance_departments_old",
+        ]
+    }
